@@ -19,10 +19,6 @@ object Functional extends App {
   }
   val rudransh = new Rudransh();
   rudransh.apply(2)
-  val function: Int => Int = (x: Int) => {
-
-  }
-  println(function(2))
 
 
 
