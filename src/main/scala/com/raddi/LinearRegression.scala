@@ -1,7 +1,7 @@
 package com.raddi
 
-case object LinearRegression{
-  val learningRate:Float
+object LinearRegression {
+  val learningRate: Float = 0
 
   def loss_root(weight: Vector[Float], x: Vector[Float], y:Float): Float ={
     y-MiscMath.dot(weight.tail,x)-weight.head
@@ -14,7 +14,7 @@ case object LinearRegression{
 
   def iteration(weight: Vector[Float], x:Vector[Vector[Float]], y:Vector[Float]): Vector[Float] = {
     if(y.length > 1){
-      loss_root(weight,x.head,y.head)+iteration(weight,x.tail,y.tail)
+      loss_root(weight,x.head,y.head) +: iteration(weight,x.tail,y.tail)
     }
     else{
       Vector(loss_root(weight,x.head,y.head))
@@ -22,6 +22,7 @@ case object LinearRegression{
   }
 
   def fit(x:Vector[Float], y:Vector[Float]): Vector[Float] = {
-    val weight: Vector[Float] = MiscMath.randVector(x.length+1)
+    val weight: Vector[Float] = MiscMath.randVector(x.length+1, 1)
+    weight
   }
 }

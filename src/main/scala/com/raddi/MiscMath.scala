@@ -12,7 +12,7 @@ object MiscMath {
 
   def multScalar(v1: Vector[Float], c: Float): Vector[Float] = {
     if(v1.length>1) {
-      (v1.head*c)+multScalar(v1.tail,c)
+      (v1.head*c) +: multScalar(v1.tail,c)
     }
     else{
       Vector(v1.head * c)
@@ -26,7 +26,7 @@ object MiscMath {
         Vector(max*r.nextFloat)
       }
       else{
-        (max*r.nextFloat)+loop(length-1, max)
+        (max*r.nextFloat)+:loop(length-1, max)
       }
     }
     loop(length, max)

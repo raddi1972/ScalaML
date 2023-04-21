@@ -16,5 +16,5 @@ object Playground extends App {
     x.split(',').toList
   })
   val df: Dataframe = DataParser.makeDataframe(fileContent)
-  println(df)
+  df.printHead()
 }
