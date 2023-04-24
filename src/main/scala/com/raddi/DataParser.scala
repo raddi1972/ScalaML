@@ -25,7 +25,7 @@ object DataParser {
   case class Index(value: Int) extends Indexes
   case class Range(i: Int, j: Int) extends Indexes
 
-  case class Dataframe(data: Vector[Vector[Type]], columns: Vector[String]) {
+  case class Dataframe(data: Vector[Vector[Type]], columns: Vector[(String, Type)]) {
 
     /**
      * This function returns the row or column based on the given string
@@ -71,7 +71,8 @@ object DataParser {
 
     // This function has side effects!
     override def toString: String = {
-      val len = columns.foldLeft[Int](0)((max, string) => if(max < string.length) string.length else max)
+      val columnNames = columns.map(col => col._1)
+      val len = columnNames.foldLeft[Int](0)((max, string) => if(max < string.length) string.length else max)
       val maxLength = Math.min(data.foldLeft[Int](len)((max, data) => {
         data.foldLeft(max)((acc, tp) => {
           val string = tp.toString
@@ -84,8 +85,8 @@ object DataParser {
           s"$acc | %-${maxLength}s |"
         })
       }
-      val formatString = makeFormatString(columns)
-      printf(formatString+"\n", columns:_*)
+      val formatString = makeFormatString(columnNames)
+      printf(formatString+"\n", columnNames:_*)
       data.foreach(row => {
         val truncatedRow = row.map(str => str.toString.substring(0, Math.min(str.toString.length,maxLength - 1)))
         printf(formatString+"\n", truncatedRow:_*)
@@ -95,7 +96,7 @@ object DataParser {
   }
 
   def makeDataframe(data: List[List[String]]): Dataframe = {
-    val columns = data.head.toVector
+    val columnNames = data.head.toVector
     val rows = data.tail // Need to convert this to data
     val rowData = rows.map(tuple => {
       tuple.map(element => {
@@ -111,7 +112,13 @@ object DataParser {
         result
       }).toVector
     })
-    Dataframe(rowData.toVector, columns)
+    def makeColumns(list1: List[String], list2: List[Type], i : Int): List[(String, Type)] = {
+      list1 match {
+        case List() => List()
+        case head::tail => (head, list2.head) :: makeColumns(tail, list2.tail, i+1)
+      }
+    }
+    Dataframe(rowData.toVector, makeColumns(columnNames.toList, rowData.head.toList, 0).toVector)
   }
 
 }
