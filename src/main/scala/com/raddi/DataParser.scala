@@ -20,24 +20,69 @@ object DataParser {
     }
   }
 
+  trait Indexes
+  case object All extends Indexes
+  case class Index(value: Int) extends Indexes
+  case class Range(i: Int, j: Int) extends Indexes
+
   case class Dataframe(data: Vector[Vector[Type]], columns: Vector[String]) {
-    def head(): Vector[Vector[Type]] = {
+
+    /**
+     * This function returns the row or column based on the given string
+     * @param i: index of row (Use the Indexes Type)
+     * @return the row with the given index
+     */
+    def apply(i: Indexes): Dataframe = {
+      i match {
+        case Range(i, j) => Dataframe(data.slice(i, j), columns)
+        case Index(value) => Dataframe(Vector(data(value)), columns)
+        case All => Dataframe(data, columns)
+      }
+    }
+    def apply(i: Indexes, j: Indexes) : Dataframe = {
+      val rowData = i match {
+          case Range(rowStart, rowEnd) => {
+            data.slice(rowStart, rowEnd)
+          }
+          case Index(value) => {
+            data.slice(value, value+1)
+          }
+          case All => {
+            data
+          }
+        }
+      j match {
+        case Range(colStart, colEnd) => {
+          val colData = rowData.map(row => row.slice(colStart, colEnd))
+          Dataframe(colData, columns.slice(colStart, colEnd))
+        }
+        case Index(value) => {
+          val newData = rowData.map(row => row.slice(value, value + 1))
+          Dataframe(newData, columns.slice(value, value + 1))
+        }
+        case All => {
+          val newData = rowData
+          Dataframe(newData, columns)
+        }
+      }
+    }
+
+    def head(): Unit = {
       val headData = if(data.length >= 5) {
         data.slice(0, 5);
       } else {
         data
       }
-      headData
+      Dataframe(headData, columns).toString
     }
 
     // This function has side effects!
-    def printHead(): Unit = {
-      val head = this.head()
+    override def toString: String = {
       val len = columns.foldLeft[Int](0)((max, string) => if(max < string.length) string.length else max)
-      val maxLength = Math.min(head.foldLeft[Int](len)((max, data) => {
+      val maxLength = Math.min(data.foldLeft[Int](len)((max, data) => {
         data.foldLeft(max)((acc, tp) => {
           val string = tp.toString
-          if(max < string.length) string.length else max
+          if(acc < string.length) string.length else max
         })
       }), 15)
       println(maxLength)
@@ -48,10 +93,11 @@ object DataParser {
       }
       val formatString = makeFormatString(columns)
       printf(formatString+"\n", columns:_*)
-      head.foreach((row) => {
+      data.foreach((row) => {
         val trunkatedRow = row.map(str => str.toString.substring(0, Math.min(str.toString.length,maxLength - 1)))
         printf(formatString+"\n", trunkatedRow:_*)
       })
+      ""
     }
   }
 

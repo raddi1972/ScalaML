@@ -1,2 +1,3 @@
 # removing the target
 target/*
+/target/

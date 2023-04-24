@@ -1,6 +1,6 @@
 package com.raddi
 
-import com.raddi.DataParser.Dataframe
+import com.raddi.DataParser.{All, Dataframe, Index, Range}
 
 import scala.io.Source
 
@@ -16,5 +16,5 @@ object Playground extends App {
     x.split(',').toList
   })
   val df: Dataframe = DataParser.makeDataframe(fileContent)
-  df.printHead()
+  println(df(Index(50), All))
 }
