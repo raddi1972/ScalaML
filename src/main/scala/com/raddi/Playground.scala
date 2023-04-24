@@ -17,5 +17,5 @@ object Playground extends App {
   })
   val df: Dataframe = DataParser.makeDataframe(fileContent)
   println(df(Index(0), All))
-  println(NdArray.makeNdArray[Float](df, "float"))
+  println(NdArray.make2dArray[Float](df, "float"))
 }

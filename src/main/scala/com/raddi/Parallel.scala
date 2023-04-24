@@ -1,5 +1,6 @@
 package com.raddi
 
+import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -8,6 +9,7 @@ object Parallel extends App {
   val powerOf2 = (n: Int) => {
     val result = 1;
 
+    @tailrec
     def loop(acc: Int, it: Int): Int = {
       if (it == 0) {
         acc
