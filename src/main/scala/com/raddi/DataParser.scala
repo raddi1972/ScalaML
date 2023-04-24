@@ -41,40 +41,33 @@ object DataParser {
     }
     def apply(i: Indexes, j: Indexes) : Dataframe = {
       val rowData = i match {
-          case Range(rowStart, rowEnd) => {
-            data.slice(rowStart, rowEnd)
-          }
-          case Index(value) => {
-            data.slice(value, value+1)
-          }
-          case All => {
-            data
-          }
+          case Range(rowStart, rowEnd) => data.slice(rowStart, rowEnd)
+          case Index(value) => data.slice(value, value+1)
+          case All => data
         }
       j match {
-        case Range(colStart, colEnd) => {
+        case Range(colStart, colEnd) =>
           val colData = rowData.map(row => row.slice(colStart, colEnd))
           Dataframe(colData, columns.slice(colStart, colEnd))
-        }
-        case Index(value) => {
+
+        case Index(value) =>
           val newData = rowData.map(row => row.slice(value, value + 1))
           Dataframe(newData, columns.slice(value, value + 1))
-        }
-        case All => {
+
+        case All =>
           val newData = rowData
           Dataframe(newData, columns)
-        }
+
       }
     }
 
-    def head(): Unit = {
-      val headData = if(data.length >= 5) {
-        data.slice(0, 5);
-      } else {
-        data
-      }
-      Dataframe(headData, columns).toString
-    }
+    def head(): String =
+      Dataframe(if(data.length >= 5)
+        data.slice(0, 5)
+      else
+        data, columns).toString
+
+
 
     // This function has side effects!
     override def toString: String = {
@@ -87,15 +80,15 @@ object DataParser {
       }), 15)
       println(maxLength)
       def makeFormatString(column: Vector[String]): String = {
-        column.foldLeft[String]("")((acc, a) => {
+        column.foldLeft[String]("")((acc, _) => {
           s"$acc | %-${maxLength}s |"
         })
       }
       val formatString = makeFormatString(columns)
       printf(formatString+"\n", columns:_*)
-      data.foreach((row) => {
-        val trunkatedRow = row.map(str => str.toString.substring(0, Math.min(str.toString.length,maxLength - 1)))
-        printf(formatString+"\n", trunkatedRow:_*)
+      data.foreach(row => {
+        val truncatedRow = row.map(str => str.toString.substring(0, Math.min(str.toString.length,maxLength - 1)))
+        printf(formatString+"\n", truncatedRow:_*)
       })
       ""
     }
