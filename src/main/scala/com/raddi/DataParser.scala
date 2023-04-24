@@ -4,6 +4,44 @@ object DataParser {
   trait Type {
     def toString: String
   }
+  object Type {
+    val predTable = Map(
+      "string" -> 0,
+      "float" -> 1,
+      "int" -> 2,
+      "null" -> 100
+    )
+    val defaultValues = Map(
+      "string" -> "",
+      "float" -> 0.0f,
+      "int" -> 0
+    )
+    val baseType = "int" // Worst precedence can be easily converted to other types
+    def getDefaultValue(typ: String) : Any = {
+      defaultValues(typ)
+    }
+    def getTypePrecedence(e1: Type, e2: Type): Boolean = {
+      val type1 = dType(e1)
+      val type2 = dType(e2)
+      getTypePrecedence(type1, type2)
+    }
+    def getTypePrecedence(e1: String, e2: String): Boolean = {
+     predTable(e1) <= predTable(e2)
+    }
+    def dType(element: Type): String = {
+      element match {
+        case FrameInt(_) => "float"
+        case FrameString(_) => "string"
+        case FrameFloat(_) => "int"
+      }
+    }
+  }
+  case object Null extends Type {
+    val stringDefault: FrameString = FrameString("")
+    val intDefault: FrameInt = FrameInt(0)
+    val floatDefault: FrameFloat = FrameFloat(0.0f)
+  }
+
   case class FrameString(value: String) extends Type {
     override def toString: String = {
       value
@@ -13,11 +51,13 @@ object DataParser {
     override def toString: String = {
       s"$value"
     }
+
   }
   case class FrameFloat(value: Float) extends Type {
     override def toString: String = {
       s"$value"
     }
+
   }
 
   trait Indexes
@@ -25,7 +65,7 @@ object DataParser {
   case class Index(value: Int) extends Indexes
   case class Range(i: Int, j: Int) extends Indexes
 
-  case class Dataframe(data: Vector[Vector[Type]], columns: Vector[(String, Type)]) {
+  case class Dataframe(data: Vector[Vector[Type]], columns: Vector[(String, String)]) {
 
     /**
      * This function returns the row or column based on the given string
@@ -95,30 +135,49 @@ object DataParser {
     }
   }
 
-  def makeDataframe(data: List[List[String]]): Dataframe = {
-    val columnNames = data.head.toVector
-    val rows = data.tail // Need to convert this to data
-    val rowData = rows.map(tuple => {
-      tuple.map(element => {
+  def identifyColumnType(df:List[List[String]], columnNames: List[String]): Vector[String] = {
+    val baseTypes = columnNames.map(it => Type.baseType)
+    df.map(row => {
+      row.map(element => {
         val maybeInt = element.toIntOption
         val maybeFloat = element.toFloatOption
-        val result: Type  = maybeInt match {
-          case Some(number) => FrameInt(number)
+        val result: String = maybeInt match {
+          case Some(number) => "int"
           case None => maybeFloat match {
-            case Some(number) => FrameFloat(number)
-            case None => FrameString(element)
+            case Some(number) => "float"
+            case None => "string"
           }
         }
-        result
-      }).toVector
-    })
-    def makeColumns(list1: List[String], list2: List[Type], i : Int): List[(String, Type)] = {
-      list1 match {
-        case List() => List()
-        case head::tail => (head, list2.head) :: makeColumns(tail, list2.tail, i+1)
+        if(element.isEmpty)
+          "null"
+        else result
+      })
+    }).foldLeft(baseTypes) ((acc, list) => {
+      acc.zip(list).map{
+        case (typ, lsType)=>{
+          if(Type.getTypePrecedence(typ, lsType)) typ else lsType
+        }
       }
-    }
-    Dataframe(rowData.toVector, makeColumns(columnNames.toList, rowData.head.toList, 0).toVector)
+    }).toVector
+  }
+
+  def makeDataframe(data: List[List[String]]): Dataframe = {
+    val columnNames = data.head.toVector
+    val columnTypes = identifyColumnType(data.tail, columnNames.toList)
+    val rows = data.tail // Need to convert this to data
+    val rowData = rows.map(tuple => {
+      tuple.zip(columnTypes).map {
+        case (data, typ) => {
+          if (data.isEmpty) Null
+          else typ match {
+            case "int" => FrameInt(data.toInt)
+            case "float" => FrameFloat(data.toFloat)
+            case "string" => FrameString(data)
+          }
+        }
+      }.toVector
+    })
+    Dataframe(rowData.toVector, columnNames.zip(columnTypes))
   }
 
 }

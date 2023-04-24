@@ -16,6 +16,6 @@ object Playground extends App {
     x.split(',').toList
   })
   val df: Dataframe = DataParser.makeDataframe(fileContent)
-  println(df(Index(50), All))
-  println(NdArray.makeNdArray[Float](df, DataParser.FrameFloat(0)))
+  println(df(Index(0), All))
+  println(NdArray.makeNdArray[Float](df, "float"))
 }
