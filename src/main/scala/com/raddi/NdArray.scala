@@ -14,7 +14,7 @@ object NdArray {
    *
    * @param dataframe
    */
-  def make2dArray[A](dataframe: Dataframe, dataType: String): NArray[A] = {
+  def make2dArray[A](dataframe: Dataframe, dataType: String): Array2[A] = {
     val filtered = dataframe.data.map(row => {
       row.zip(dataframe.columns.map(tuple => tuple._2)).filter(element => {
          if(Type.getTypePrecedence(dataType, element._2)) true else false
@@ -36,15 +36,27 @@ object NdArray {
     }
   }
 
-  def transpose()
+  def transpose[A: Numeric](array: Array2[A]): Array2[A] = {
+    val data = array.data
+    def makeVec(n:Int) : Vector[Vector[A]] = {
+      if(n == 1) Vector(Vector())
+      else Vector() +: makeVec(n-1)
+    }
+    Array2(data.foldLeft(makeVec(data(0).length))((acc, row) => {
+      val input = makeVec(row.length)
+      val cols = row.zip(input).map(it => {
+        it._2 :+ it._1
+      })
+      cols.zip(acc).map(pair => pair._2 ++ pair._1)
+    }))
+  }
 
-  def *[A](left: Array2[A], right: Array2[A]): Option[Array2[A]] = {
+  def *[A: Numeric](left: Array2[A], right: Array2[A]): Option[Array2[A]] = {
     // Matrix Multiplication
-    val leftData = left.data
-    val rightData = right.data
-    if(leftData(0).length != rightData.length) None
+    if(left.data(0).length != right.data.length) None
     else {
-      val newRightData = rightData
+      val rightT = transpose(right)
+      Some(Array2(left.data.map(row => rightT.data.map(col => *(Array1(row),Array1(col)).get))))
     }
   }
 }
